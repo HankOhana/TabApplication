@@ -4,7 +4,7 @@ import com.henadz.sample.tabapplication.domain.model.CellData
 import kotlinx.coroutines.flow.Flow
 
 interface TableRepository {
-    fun getTableData(
+    suspend fun getTableData(
         rows: Int,
         cols: Int,
     ): Flow<List<CellData>>

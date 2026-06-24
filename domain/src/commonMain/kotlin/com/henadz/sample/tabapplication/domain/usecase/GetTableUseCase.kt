@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 class GetTableUseCase(
     private val repository: TableRepository,
 ) {
-    operator fun invoke(
+    suspend operator fun invoke(
         rows: Int,
         cols: Int,
     ): Flow<List<CellData>> = repository.getTableData(rows, cols)

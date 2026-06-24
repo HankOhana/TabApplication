@@ -14,15 +14,17 @@ internal class InMemoryTableRepository : TableRepository {
     private val mutex = Mutex()
     private var cachedGrid: MutableList<CellData>? = null
 
-    override fun getTableData(
+    override suspend fun getTableData(
         rows: Int,
         cols: Int,
     ): Flow<List<CellData>> {
-        val targetSize = rows * cols
-        val grid =
-            cachedGrid?.takeIf { it.size == targetSize }
-                ?: generateGrid(rows, cols).toMutableList().also { cachedGrid = it }
-        _state.value = grid.toList()
+        mutex.withLock {
+            val targetSize = rows * cols
+            val grid =
+                cachedGrid?.takeIf { it.size == targetSize }
+                    ?: generateGrid(rows, cols).toMutableList().also { cachedGrid = it }
+            _state.value = grid.toList()
+        }
         return _state.asStateFlow()
     }
 

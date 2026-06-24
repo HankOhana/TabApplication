@@ -11,12 +11,16 @@ import com.henadz.sample.tabapplication.domain.usecase.UpdateCellDataUseCase
 import com.henadz.sample.tabapplication.ui.strings.UiStrings
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.stateIn
@@ -33,11 +37,14 @@ class TableViewModel(
 ) : ViewModel() {
     private val _editingCell = MutableStateFlow<UiCell?>(null)
 
-    private val cellsFlow: Flow<ImmutableList<UiCell>> =
-        getTableUseCase(rows, cols)
-            .runningFold<List<CellData>, ImmutableList<UiCell>>(persistentListOf()) { prev, domain ->
-                domain.toOptimizedUiCells(prev)
-            }
+    private val cellsFlow: Flow<ImmutableList<UiCell>> = flow {
+        emitAll(
+            getTableUseCase(rows, cols)
+                .runningFold<List<CellData>, ImmutableList<UiCell>>(persistentListOf()) { prev, domain ->
+                    domain.toOptimizedUiCells(prev)
+                },
+        )
+    }
 
     val state: StateFlow<TableUiState> =
         combine(cellsFlow, _editingCell) { cells, editingCell ->
@@ -48,11 +55,13 @@ class TableViewModel(
                 cells = cells,
                 editingCell = editingCell,
             )
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = TableUiState(rows = rows, columns = cols),
-        )
+        }
+            .flowOn(Dispatchers.Default)
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Lazily,
+                initialValue = TableUiState(rows = rows, columns = cols),
+            )
 
     private val _effects = Channel<TableUiEffect>(Channel.BUFFERED)
     val effects: Flow<TableUiEffect> = _effects.receiveAsFlow()
@@ -84,7 +93,9 @@ class TableViewModel(
     ) {
         viewModelScope.launch {
             updateCellDataUseCase(id, text)
-            _editingCell.value = null
+            if (_editingCell.value?.id == id) {
+                _editingCell.value = null
+            }
         }
     }
 
@@ -130,8 +141,6 @@ private fun List<CellData>.toOptimizedUiCells(current: ImmutableList<UiCell>): I
 private fun CellData.toUiCell() =
     UiCell(
         id = id,
-        rowIndex = rowIndex,
-        columnIndex = columnIndex,
         text = text,
         isGreen = isGreen,
     )

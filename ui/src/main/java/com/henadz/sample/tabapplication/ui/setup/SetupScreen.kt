@@ -44,13 +44,15 @@ fun SetupScreen(onSubmit: (rows: Int, cols: Int) -> Unit) {
     val rowsValue by remember { derivedStateOf { rowsInput.toIntOrNull() } }
     val colsValue by remember { derivedStateOf { colsInput.toIntOrNull() } }
 
-    val rowsError = rowsInput.isNotEmpty() && (rowsValue == null || rowsValue !in GridConstraints.MIN_ROWS..GridConstraints.MAX_ROWS)
-    val colsError = colsInput.isNotEmpty() && (colsValue == null || colsValue !in GridConstraints.MIN_COLS..GridConstraints.MAX_COLS)
+    val rowsError =
+        rowsInput.isNotEmpty() && (rowsValue == null || rowsValue !in GridConstraints.MIN_ROWS..GridConstraints.MAX_ROWS)
+    val colsError =
+        colsInput.isNotEmpty() && (colsValue == null || colsValue !in GridConstraints.MIN_COLS..GridConstraints.MAX_COLS)
     val submitEnabled =
         rowsValue != null &&
-            rowsValue in GridConstraints.MIN_ROWS..GridConstraints.MAX_ROWS &&
-            colsValue != null &&
-            colsValue in GridConstraints.MIN_COLS..GridConstraints.MAX_COLS
+                rowsValue in GridConstraints.MIN_ROWS..GridConstraints.MAX_ROWS &&
+                colsValue != null &&
+                colsValue in GridConstraints.MIN_COLS..GridConstraints.MAX_COLS
 
     val dimens = TabAppTheme.dimens
     val colsFocus = remember { FocusRequester() }
@@ -87,7 +89,10 @@ fun SetupScreen(onSubmit: (rows: Int, cols: Int) -> Unit) {
                 label = UiStrings.ROWS_LABEL,
                 isError = rowsError,
                 supportingText = if (rowsError) UiStrings.ROWS_ERROR else null,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Next
+                ),
                 keyboardActions = KeyboardActions(onNext = { colsFocus.requestFocus() }),
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -98,7 +103,10 @@ fun SetupScreen(onSubmit: (rows: Int, cols: Int) -> Unit) {
                 label = UiStrings.COLS_LABEL,
                 isError = colsError,
                 supportingText = if (colsError) UiStrings.COLS_ERROR else null,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done
+                ),
                 modifier = Modifier.fillMaxWidth().focusRequester(colsFocus),
             )
 
