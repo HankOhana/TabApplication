@@ -10,7 +10,7 @@ kotlin {
     android {
         namespace = "com.henadz.sample.tabapplication.data"
         compileSdk = 36
-        minSdk = 27
+        minSdk = 29
     }
 
     // JVM target for fast, framework-free unit tests.
@@ -25,6 +25,9 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.turbine)
             implementation(libs.koin.test)
         }
     }

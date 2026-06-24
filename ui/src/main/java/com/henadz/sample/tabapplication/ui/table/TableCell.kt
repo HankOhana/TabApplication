@@ -35,7 +35,7 @@ internal fun TableCell(
     val onClickWithHaptic =
         remember(haptic, onClick) {
             {
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                haptic.performHapticFeedback(HapticFeedbackType.Confirm)
                 onClick()
             }
         }
