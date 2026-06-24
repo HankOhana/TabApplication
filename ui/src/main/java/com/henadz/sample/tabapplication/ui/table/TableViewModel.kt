@@ -11,6 +11,7 @@ import com.henadz.sample.tabapplication.domain.usecase.UpdateCellDataUseCase
 import com.henadz.sample.tabapplication.ui.strings.UiStrings
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -34,6 +35,7 @@ class TableViewModel(
     private val updateCellDataUseCase: UpdateCellDataUseCase,
     private val clearSessionUseCase: ClearSessionUseCase,
     private val resetTableUseCase: ResetTableUseCase,
+    defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : ViewModel() {
     private val _editingCellId = MutableStateFlow<String?>(null)
 
@@ -56,7 +58,7 @@ class TableViewModel(
                 editingCellId = editingCellId,
             )
         }
-            .flowOn(Dispatchers.Default)
+            .flowOn(defaultDispatcher)
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.Lazily,

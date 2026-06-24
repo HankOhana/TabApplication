@@ -45,4 +45,8 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.navigation3)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.turbine)
 }
