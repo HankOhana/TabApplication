@@ -10,7 +10,7 @@ data class TableUiState(
     val rows: Int = 0,
     val columns: Int = 0,
     val cells: ImmutableList<UiCell> = persistentListOf(),
-    val editingCell: UiCell? = null,
+    val editingCellId: String? = null,
 )
 
 sealed interface TableUiIntent {
@@ -22,12 +22,12 @@ sealed interface TableUiIntent {
         val id: String,
     ) : TableUiIntent
 
-    data class CellDataChanged(
+    data class CommitCellEdit(
         val id: String,
         val text: String,
     ) : TableUiIntent
 
-    data object CloseEditDialog : TableUiIntent
+    data object CancelCellEdit : TableUiIntent
 
     data object ResetTable : TableUiIntent
 

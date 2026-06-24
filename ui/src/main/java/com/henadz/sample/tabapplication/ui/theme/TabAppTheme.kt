@@ -6,6 +6,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
@@ -28,9 +29,9 @@ fun TabAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    val colors = if (darkTheme) darkTabAppColors() else lightTabAppColors()
-    val typography = defaultTabAppTypography()
-    val dimens = tabAppDimens()
+    val colors = remember(darkTheme) { if (darkTheme) darkTabAppColors() else lightTabAppColors() }
+    val typography = remember { defaultTabAppTypography() }
+    val dimens = remember { tabAppDimens() }
 
     val view = LocalView.current
     if (!view.isInEditMode) {

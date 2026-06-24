@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -52,6 +53,9 @@ fun TableScreen(
     var showResetDialog by rememberSaveable { mutableStateOf(false) }
 
     BackHandler { showExitDialog = true }
+    BackHandler(enabled = state.editingCellId != null) {
+        viewModel.handleIntent(TableUiIntent.CancelCellEdit)
+    }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(lifecycleOwner) {
@@ -60,7 +64,6 @@ fun TableScreen(
                 when (effect) {
                     is TableUiEffect.ShowToast ->
                         Toast.makeText(context, effect.msg, Toast.LENGTH_SHORT).show()
-
                     is TableUiEffect.NavigateBack -> onBack()
                 }
             }
@@ -75,13 +78,23 @@ fun TableScreen(
         remember {
             { id: String -> viewModel.handleIntent(TableUiIntent.CellDoubleClicked(id)) }
         }
+    val onCellCommit =
+        remember {
+            { id: String, text: String -> viewModel.handleIntent(TableUiIntent.CommitCellEdit(id, text)) }
+        }
+
+    val editingCellIdProvider: () -> String? =
+        remember { { viewModel.state.value.editingCellId } }
+
+    val editingCellId = state.editingCellId
 
     Column(
         modifier =
             Modifier
                 .fillMaxSize()
                 .background(TabAppTheme.colors.background)
-                .statusBarsPadding(),
+                .statusBarsPadding()
+                .imePadding(),
     ) {
         if (!state.isLoading) {
             ColumnHeaderRow(columnCount = state.columns)
@@ -108,6 +121,8 @@ fun TableScreen(
                     ) { cell ->
                         TableCell(
                             cell = cell,
+                            isEditing = cell.id == editingCellId,
+                            isAnyEditingProvider = editingCellIdProvider,
                             onClick =
                                 remember(cell.id, onCellClick) {
                                     { onCellClick(cell.id) }
@@ -115,6 +130,10 @@ fun TableScreen(
                             onDoubleClick =
                                 remember(cell.id, onCellDoubleClick) {
                                     { onCellDoubleClick(cell.id) }
+                                },
+                            onCommit =
+                                remember(cell.id, onCellCommit) {
+                                    { text -> onCellCommit(cell.id, text) }
                                 },
                         )
                     }
@@ -126,16 +145,6 @@ fun TableScreen(
             showReset = !state.isLoading,
             onExitClick = { showExitDialog = true },
             onResetClick = { showResetDialog = true },
-        )
-    }
-
-    state.editingCell?.let { cell ->
-        EditDialog(
-            cell = cell,
-            onConfirm = { text ->
-                viewModel.handleIntent(TableUiIntent.CellDataChanged(cell.id, text))
-            },
-            onDismiss = { viewModel.handleIntent(TableUiIntent.CloseEditDialog) },
         )
     }
 

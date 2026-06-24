@@ -35,7 +35,7 @@ class TableViewModel(
     private val clearSessionUseCase: ClearSessionUseCase,
     private val resetTableUseCase: ResetTableUseCase,
 ) : ViewModel() {
-    private val _editingCell = MutableStateFlow<UiCell?>(null)
+    private val _editingCellId = MutableStateFlow<String?>(null)
 
     private val cellsFlow: Flow<ImmutableList<UiCell>> = flow {
         emitAll(
@@ -47,13 +47,13 @@ class TableViewModel(
     }
 
     val state: StateFlow<TableUiState> =
-        combine(cellsFlow, _editingCell) { cells, editingCell ->
+        combine(cellsFlow, _editingCellId) { cells, editingCellId ->
             TableUiState(
                 isLoading = cells.isEmpty(),
                 rows = rows,
                 columns = cols,
                 cells = cells,
-                editingCell = editingCell,
+                editingCellId = editingCellId,
             )
         }
             .flowOn(Dispatchers.Default)
@@ -69,9 +69,9 @@ class TableViewModel(
     fun handleIntent(intent: TableUiIntent) {
         when (intent) {
             is TableUiIntent.CellClicked -> toggleColor(intent.id)
-            is TableUiIntent.CellDoubleClicked -> openEditDialog(intent.id)
-            is TableUiIntent.CellDataChanged -> updateCell(intent.id, intent.text)
-            is TableUiIntent.CloseEditDialog -> closeEditDialog()
+            is TableUiIntent.CellDoubleClicked -> startEdit(intent.id)
+            is TableUiIntent.CommitCellEdit -> commitEdit(intent.id, intent.text)
+            is TableUiIntent.CancelCellEdit -> cancelEdit()
             is TableUiIntent.ExitSession -> exitSession()
             is TableUiIntent.ResetTable -> resetTable()
         }
@@ -81,26 +81,25 @@ class TableViewModel(
         viewModelScope.launch { toggleCellColorUseCase(id) }
     }
 
-    private fun openEditDialog(id: String) {
-        val index = id.toIntOrNull() ?: return
-        val cell = state.value.cells.getOrNull(index) ?: return
-        _editingCell.value = cell
+    private fun startEdit(id: String) {
+        _editingCellId.value = id
     }
 
-    private fun updateCell(
+    private fun cancelEdit() {
+        _editingCellId.value = null
+    }
+
+    private fun commitEdit(
         id: String,
         text: String,
     ) {
-        viewModelScope.launch {
-            updateCellDataUseCase(id, text)
-            if (_editingCell.value?.id == id) {
-                _editingCell.value = null
-            }
+        if (_editingCellId.value == null) return
+        _editingCellId.value = null
+        val index = id.toIntOrNull() ?: return
+        val currentText = state.value.cells.getOrNull(index)?.text ?: return
+        if (text != currentText) {
+            viewModelScope.launch { updateCellDataUseCase(id, text) }
         }
-    }
-
-    private fun closeEditDialog() {
-        _editingCell.value = null
     }
 
     private fun exitSession() {
@@ -111,6 +110,7 @@ class TableViewModel(
     }
 
     private fun resetTable() {
+        _editingCellId.value = null
         viewModelScope.launch {
             resetTableUseCase(rows, cols)
             _effects.send(TableUiEffect.ShowToast(UiStrings.TOAST_RESET_SUCCESS))

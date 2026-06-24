@@ -14,10 +14,8 @@ internal object UiStrings {
     // TableScreen
     fun columnHeader(index: Int) = "COL ${index + 1}"
 
-    // EditDialog
-    const val EDIT_CELL = "EDIT CELL"
+    // Dialogs (shared dismiss label)
     const val CANCEL = "CANCEL"
-    const val SAVE = "SAVE"
 
     // Bottom action bar
     const val EXIT = "EXIT"
